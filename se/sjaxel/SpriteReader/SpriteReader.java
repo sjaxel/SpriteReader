@@ -1,7 +1,8 @@
 package se.sjaxel.SpriteReader;
 
-import java.awt.Graphics2D;
+
 import java.awt.image.*;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,6 +35,10 @@ public class SpriteReader {
 		this(Paths.get(pathstring), row, col);
 	}
 	
+	public SpriteReader(File file, int row, int col) {
+		this(file.toPath(), row, col);
+	}
+	
 	public void setYOffset(int y) {
 		yOffset = y;
 		
@@ -42,13 +47,26 @@ public class SpriteReader {
 	public void setXOffset(int x) {
 		xOffset = x;
 	}
-
+	
+	public void setXGrid(int row) {
+		this.row = row;
+		spriteH = (spritesheet.getHeight()/row);
+	}
+	public void setYGrid(int col) {
+		this.col = col;
+		spriteW = (spritesheet.getWidth()/col);	
+	}
+	
+	public int getIndex() {
+		return row*col;
+	}
 	public BufferedImage getSprite(int n) {
 		int j = ((n-1) % col);
 		int i = ((n-1)/col);
 		BufferedImage sprite = null;
 		try {
-		sprite = spritesheet.getSubimage(j*spriteW+xOffset, i*spriteH+yOffset, spriteW, spriteH);
+		sprite = spritesheet.getSubimage((j)*spriteW+(xOffset), 
+					(i)*spriteH+yOffset, spriteW, spriteH);
 		return sprite;
 		} catch (RasterFormatException e) {
 			return placeHolder();
