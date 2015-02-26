@@ -3,9 +3,11 @@ package se.sjaxel.SpriteReader;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.ArrayList;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -19,6 +21,8 @@ public class SpriteGUI extends JFrame
 	private SpriteReader reader;
 	private JPanel picPanel;
 	private JPanel buttonPanel;
+	private ArrayList<BufferedImage> workingSprites;
+	private ArrayList<ImageBox> workingBoxes;
 	
 	SpriteGUI () {
 		picPanel = new JPanel();
@@ -29,19 +33,23 @@ public class SpriteGUI extends JFrame
 		JSlider source = (JSlider)e.getSource();
 		if (source.getName() == "xOffset" && reader != null) {
 			reader.setXOffset(source.getValue());
-			updatePicPanel();
+			updatePicPanel("reload");
 		} else if (source.getName() == "yOffset" && reader != null) {
 			reader.setYOffset(source.getValue()); 
-			updatePicPanel();
+			updatePicPanel("reload");
 		}	
 	}
 	
 	public void actionPerformed(ActionEvent e) {
 		if (e.getActionCommand() == "loadimage") {
 			loadReader();
+		} else if (e.getActionCommand() == "reload") {
+			updatePicPanel("reload");
 		} else if (e.getActionCommand() == "update") {
-			updatePicPanel();
-		}
+			updatePicPanel("update");
+		} else if (e.getActionCommand() == "export" && workingBoxes != null) {
+			SpriteExport.write(getCurrentSprites());
+		} 
 	}
 	
 	public void propertyChange(PropertyChangeEvent e) {
@@ -55,33 +63,40 @@ public class SpriteGUI extends JFrame
 	
 	private void loadReader() {
         int returnVal = fc.showOpenDialog(this);
-
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File file = fc.getSelectedFile();
-            reader = new SpriteReader(file, 1, 1);
+            reader = new SpriteReader(file, 9, 13);
+            updatePicPanel("reload");
         }
 	}
 	
-	private void updatePicPanel() {
+	private void updatePicPanel(String mode) {
 		picPanel.removeAll();
-		populate();
+		if (mode == "reload" && reader != null) {
+			populate();
+		} else if (mode == "update" && workingBoxes != null) {
+			populate(workingBoxes);
+		} 
 		picPanel.revalidate();
 		picPanel.repaint();
 	}
 	
 	public void populate() {
-		for (int i=1; i<(reader.getIndex()+1); i++) {
-			addImage(i);
+		workingSprites = reader.getSprites();
+		workingBoxes = new ArrayList<ImageBox>();
+		for (BufferedImage image : workingSprites) {
+			ImageBox box = new ImageBox(image, reader);
+			workingBoxes.add(box);
+			picPanel.add(box);
 		}	
 	}
-
-	private void addImage(int n) {
-		JLabel picture = new JLabel(new ImageIcon(reader.getSprite(n)));
-		picture.setBorder(BorderFactory.createMatteBorder(
-                2, 2, 2, 2, Color.white));
-		picPanel.add(picture);
-	}
-	
+	public void populate(ArrayList<ImageBox> current) {
+		for (ImageBox box : current) {
+			if (box.state == ImageBox.Status.VISIBLE) {
+				picPanel.add(box);
+			}
+		}	
+	}	
 	private void addSlider(String name, int orientation, String placement, int min, int max, int value) {
 		JSlider slider = new JSlider(orientation, min, max, value);
 		slider.setName(name);
@@ -103,6 +118,8 @@ public class SpriteGUI extends JFrame
 		addFormatTextField("xgrid", 1, 4, buttonPanel);
 		addFormatTextField("ygrid", 1, 4, buttonPanel);
 		addButton("Update", "update", buttonPanel);
+		addButton("Reload", "reload", buttonPanel);
+		addButton("Export", "export", buttonPanel);
 		add(buttonPanel, BorderLayout.NORTH);
 		
 	}
@@ -132,6 +149,16 @@ public class SpriteGUI extends JFrame
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		pack();
 		setVisible(true);
+	}
+	
+	public ArrayList<BufferedImage> getCurrentSprites() {
+		ArrayList<BufferedImage> spriteList = new ArrayList<BufferedImage>();
+		for (ImageBox box : workingBoxes) {
+			if (box.state == ImageBox.Status.VISIBLE) {
+				spriteList.add(box.getImage());
+			}
+		}
+		return spriteList;
 	}
 	
 	public static void main(String[] args) {

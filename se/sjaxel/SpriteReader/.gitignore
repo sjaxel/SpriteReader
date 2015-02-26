@@ -1,3 +1,8 @@
 /SpriteGUI.class
 /SpriteReader.class
 /SpriteLoader.class
+/SpriteGUI$ImageBox.class
+/SpriteGUI$ImageBox$Status.class
+/ImageBox.class
+/ImageBox$Status.class
+/SpriteExport.class
