@@ -18,19 +18,37 @@ public class ImageBox extends JLabel implements MouseListener, Serializable {
 	private static final long serialVersionUID = 1L;
 	Status state;
 	BufferedImage image;
+	private int index;
     enum Status {
         VISIBLE, SELECTED;
     }
-	ImageBox(BufferedImage i, SpriteReader reader) {
+	ImageBox(int ind, BufferedImage i, SpriteReader reader) {
+		index = ind;
 		image = i;
 		setIcon(new ImageIcon(image));
-		setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.white));
+		setState(Status.VISIBLE);
 		addMouseListener(this);
-		state = Status.VISIBLE;
+	}
+	
+	public void setState(Status state) {
+		this.state = state;
+		if (state == Status.VISIBLE) {
+			setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.white));
+		} else if (state == Status.SELECTED) {
+			setBorder(BorderFactory.createMatteBorder(3, 3, 3, 3, Color.red));
+		}
 	}
 	
 	public BufferedImage getImage() {
 		return image;
+	}
+	public void setImage(BufferedImage i) {
+		image = i;
+		setIcon(new ImageIcon(image));
+	}
+	
+	public int getIndex() {
+		return index;
 	}
 	
 	public void mouseClicked(MouseEvent e) {
@@ -51,13 +69,11 @@ public class ImageBox extends JLabel implements MouseListener, Serializable {
 
 	public void mousePressed(MouseEvent e) {
 	    if (state == Status.VISIBLE) {
-	    	state = Status.SELECTED;
-	    	setBorder(BorderFactory.createMatteBorder(3, 3, 3, 3, Color.RED));
+	    	setState(Status.SELECTED);
 	    	revalidate();
 	    	repaint();
 	    } else if (state == Status.SELECTED) {
-	    	state = Status.VISIBLE;
-	    	setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.WHITE));
+	    	setState(Status.VISIBLE);
 	    	revalidate();
 	    	repaint();
 	    }
