@@ -13,17 +13,26 @@ import javax.imageio.ImageIO;
 
 public class SpriteReader {
 	private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+	private BufferedImage baseImage;
 	private BufferedImage spritesheet;
+	
+	
 	private ArrayList<BufferedImage> workingSprites;
 	private int row, col;
 	private int xOffset, yOffset;
+	private int xIndent, yIndent;
+	private int xDisplacement, yDisplacement;
 	private int spriteH;
 	private int spriteW;
 	
 	public SpriteReader() {
 		row = 1; col = 1;
-		xOffset = 0; yOffset = 0;			
+		xOffset = 0; yOffset = 0;
+		xIndent = 0; yIndent = 0;
+		xDisplacement = 0; yDisplacement = 0;
 	}
+	
+	
 	
 	
 	public void addPropertyChangeListener(PropertyChangeListener l) {
@@ -46,11 +55,41 @@ public class SpriteReader {
 		
 	}
 		
+	public void setXDisplacement(int x) {
+		int oldx = xDisplacement;
+		xDisplacement = x;
+		updateSprites();
+		pcs.firePropertyChange("xDisplacement", oldx, xDisplacement);
+	}
+
+	public void setYDisplacement(int y) {
+		int oldy = yDisplacement;
+		yDisplacement = y;
+		updateSprites();
+		pcs.firePropertyChange("xDisplacement", oldy, yDisplacement);
+		
+	}
+		
 	public void setXOffset(int x) {
 		int oldx = xOffset;
 		xOffset = x;
 		updateSprites();
 		pcs.firePropertyChange("xOffset", oldx, xOffset);
+	}
+	
+	public void setXIndent(int x) {
+		int oldx = xIndent;
+		xIndent = x;
+		updateDimensions();
+		updateSprites();
+		pcs.firePropertyChange("xIndent", oldx, xIndent);
+	}
+	public void setYIndent(int y) {
+		int oldy = yIndent;
+		yIndent = y;
+		updateDimensions();
+		updateSprites();
+		pcs.firePropertyChange("yIndent", oldy, yIndent);
 	}
 	
 	public void setXGrid(int row) {
@@ -92,8 +131,10 @@ public class SpriteReader {
 			int i = ((n-1)/col);
 			BufferedImage sprite;
 			try {
-				sprite = spritesheet.getSubimage((j)*spriteW+(xOffset), 
-						(i)*spriteH+yOffset, spriteW, spriteH);
+				sprite = spritesheet.getSubimage(
+						(j*spriteW)+(xOffset)+(xIndent), 
+						(i*spriteH)+(yOffset)+(yIndent), 
+						spriteW, spriteH);
 				workingSprites.add(sprite);
 				pcs.fireIndexedPropertyChange("Sprite", n, workingSpritesCopy.get(n-1), workingSprites.get(n-1));
 			} catch (RasterFormatException e) {
@@ -105,8 +146,8 @@ public class SpriteReader {
 	}
 	
 	private void updateDimensions() {
-		spriteH = (spritesheet.getHeight()/row);
-		spriteW = (spritesheet.getWidth()/col);
+		spriteH = ((spritesheet.getHeight()-(yIndent*2))/row);
+		spriteW = ((spritesheet.getWidth()-(xIndent*2))/col);
 	}
 	
 	private BufferedImage placeHolder() {

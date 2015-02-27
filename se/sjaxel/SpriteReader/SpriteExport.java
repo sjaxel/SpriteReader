@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.awt.image.BufferedImage;
 
 import javax.imageio.ImageIO;
+import javax.swing.JOptionPane;
 public abstract class SpriteExport {
 	
 	public static void write(ArrayList<BufferedImage> spriteList, String format, SpriteGUI mainwindow) {
@@ -18,6 +19,10 @@ public abstract class SpriteExport {
 				e.printStackTrace();
 			}
 		}
-		mainwindow.showMessage("Export completed!");
+		showMessage("Export completed!", mainwindow);
+	}
+	
+	public static void showMessage(String message, SpriteGUI mainwindow) {
+		JOptionPane.showMessageDialog(mainwindow, message);
 	}
 }

@@ -83,6 +83,7 @@ public class ImageBox extends JLabel implements MouseListener, KeyListener, Seri
 	    }
 
 	public void mouseEntered(MouseEvent e) {
+		requestFocus();
 	    if (gui.getModkey() == SpriteGUI.ModKey.SELECT) {
 	    	setState(Status.SELECTED);
 	    } else if (gui.getModkey() == SpriteGUI.ModKey.DESELECT) {
@@ -99,17 +100,20 @@ public class ImageBox extends JLabel implements MouseListener, KeyListener, Seri
 	    }
 
 	public void mousePressed(MouseEvent e) {
-	    if (state == Status.VISIBLE) {
-	    	setState(Status.SELECTED);
-	    	revalidate();
-	    	repaint();
-	    	requestFocus();
-	    } else if (state == Status.SELECTED) {
-	    	setState(Status.VISIBLE);
-	    	revalidate();
-	    	repaint();
-	    	requestFocus();
-	    }
+		switch (gui.getEditMode()) {
+			case SPRITES:
+				if (state == Status.VISIBLE) {
+			    	setState(Status.SELECTED);
+			    	revalidate();
+			    	repaint();
+			    	
+			    } else if (state == Status.SELECTED) {
+			    	setState(Status.VISIBLE);
+			    	revalidate();
+			    	repaint();
+			    }
+			case BASE:
+				// Nothing
+			}
 	}
-	
 }

@@ -22,16 +22,22 @@ public class SpriteGUI extends JFrame
 	private final JFileChooser fc = new JFileChooser(System.getProperty("user.dir"));
 	private SpriteReader reader;
 	private JPanel picPanel;
+	private JPanel westSlider;
+	private JPanel southSlider;
 	private JPanel buttonPanel;
 	private ArrayList<ImageBox> workingBoxes;
 	private ModKey key;
+	private EditMode mode;
     enum ModKey {
         SELECT, DESELECT, NONE;
     }
+    enum EditMode {
+    	BASE, SPRITES;
+    }
+    
 	SpriteGUI () {
-		picPanel = new JPanel();
-		setPreferredSize(new Dimension(640, 480));
 		key = ModKey.NONE;
+		mode = EditMode.BASE;
 	}
 	
 	public void setModel(SpriteReader r) {
@@ -54,7 +60,13 @@ public class SpriteGUI extends JFrame
 		} else if (source.getName() == "yOffset" && reader != null) {
 			reader.setYOffset(source.getValue()); 
 			updatePicPanel("update");
-		}	
+		} else if (source.getName() == "yIndent" && reader != null) {
+			reader.setYIndent(source.getValue()); 
+			updatePicPanel("update");
+		} else if (source.getName() == "xIndent" && reader != null) {
+			reader.setXIndent(source.getValue()); 
+			updatePicPanel("update");
+		}
 	}
 	
 	@Override
@@ -63,6 +75,8 @@ public class SpriteGUI extends JFrame
 			loadReader();
 		} else if (e.getActionCommand() == "reload") {
 			updatePicPanel("reload");
+		} else if (e.getActionCommand() == "editmode") {
+			switchEditMode();
 		} else if (e.getActionCommand() == "delete") {
 			deleteSelected();
 		} else if (e.getActionCommand() == "export" && workingBoxes != null) {
@@ -96,6 +110,20 @@ public class SpriteGUI extends JFrame
 	public void setModkey(ModKey k) {
 		key = k;
 	}
+	
+	public EditMode getEditMode() {
+		return mode;
+	}
+	
+	public void switchEditMode() {
+		if (mode == EditMode.BASE) {
+			mode = EditMode.SPRITES;
+		} else if (mode == EditMode.SPRITES) {
+			mode = EditMode.BASE;
+		}
+		updateSliderPanels();
+		updatePicPanel("update");
+	}
 
 	private void loadReader() {
         int returnVal = fc.showOpenDialog(this);
@@ -108,14 +136,20 @@ public class SpriteGUI extends JFrame
 	}
 	
 	private void updatePicPanel(String mode) {
-		picPanel.removeAll();
+		if (picPanel == null) {
+			picPanel = new JPanel();
+			picPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+			add(picPanel, BorderLayout.CENTER);
+		} else {
+			picPanel.removeAll();
+		}
 		if (mode == "reload" && reader != null) {
 			reload();
 		} else if (mode == "update" && workingBoxes != null) {
 			update();
 		} 
-		picPanel.revalidate();
-		picPanel.repaint();
+		revalidate();
+		repaint();
 	}
 	
 	public void reload() {
@@ -128,9 +162,9 @@ public class SpriteGUI extends JFrame
 	}
 	public void update() {
 		for (ImageBox box : workingBoxes) {
-			if (box.state == ImageBox.Status.VISIBLE) {
+			if (box.state == ImageBox.Status.VISIBLE && !(mode == EditMode.BASE)) {
 				picPanel.add(box);
-			} else if (box.state == ImageBox.Status.SELECTED) {
+			} else if (box.state == ImageBox.Status.SELECTED  || mode == EditMode.BASE) {
 				box.setImage(reader.getSprite(box.getIndex()));
 				picPanel.add(box);
 			}
@@ -157,11 +191,40 @@ public class SpriteGUI extends JFrame
 		updatePicPanel("update");
 	}
 	
-	private void addSlider(String name, int orientation, String placement, int min, int max, int value) {
+	private void updateSliderPanels() {
+		if (westSlider == null || southSlider == null) {
+			westSlider = new JPanel();
+			westSlider.setLayout(new BoxLayout(westSlider, BoxLayout.LINE_AXIS));
+			southSlider = new JPanel();
+			southSlider.setLayout(new BoxLayout(southSlider, BoxLayout.PAGE_AXIS));
+		} else {
+			westSlider.removeAll();
+			southSlider.removeAll();
+			remove(westSlider);
+			remove(southSlider);
+		}
+		addSliderPanels();
+	}
+	
+	private void addSliderPanels() {
+		if (mode == EditMode.BASE) {
+			addSlider("xIndent", SwingConstants.HORIZONTAL, southSlider, 0, 100, 0);
+			addSlider("yIndent", SwingConstants.VERTICAL, westSlider, 0, 100, 0);
+		} else if (mode == EditMode.SPRITES) {
+			addSlider("xOffset", SwingConstants.HORIZONTAL, southSlider, -30, 30, 0);
+			addSlider("yOffset", SwingConstants.VERTICAL, westSlider, -30, 30, 0);
+		}
+		add(westSlider, BorderLayout.WEST);
+		add(southSlider, BorderLayout.SOUTH);
+		revalidate();
+		repaint();
+	}
+	
+	private void addSlider(String name, int orientation, JPanel target, int min, int max, int value) {
 		JSlider slider = new JSlider(orientation, min, max, value);
 		slider.setName(name);
 		sliderSettings(slider);
-		add(slider, placement);
+		target.add(slider);
 	}
 	
 	private void sliderSettings(JSlider slider) {
@@ -172,13 +235,18 @@ public class SpriteGUI extends JFrame
 		slider.setPaintLabels(true);
 	}
 	
-	private void addButtonsPanel() {
+	private void updateButtonsPanel() {
 		if (buttonPanel != null) {
 			buttonPanel.removeAll();
 		} else {
 		buttonPanel = new JPanel();
 		}
+		addButtonsPanel();
+	}
+	
+	private void addButtonsPanel() {
 		addButton("Load spritesheet", "loadimage", buttonPanel);
+		addButton("Switch edit mode", "editmode", buttonPanel);
 		buttonPanel.add(new JLabel("Rows: "));
 		addFormatTextField("xgrid", 1, 4, buttonPanel);
 		buttonPanel.add(new JLabel("Columns: "));
@@ -207,17 +275,19 @@ public class SpriteGUI extends JFrame
 		parent.add(field);
 	}
 	
-	public void displayMainWindow() {
-		addSlider("xOffset", SwingConstants.HORIZONTAL, BorderLayout.SOUTH, -30, 30, 1);
-		addSlider("yOffset", SwingConstants.VERTICAL, BorderLayout.WEST, -30, 30, 1);
-		picPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
-		add(picPanel, BorderLayout.CENTER);
-		addButtonsPanel();
+	private void mainWindowSettings() {
+		setPreferredSize(new Dimension(640, 480));
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	}
+	
+	public void displayMainWindow() {
+		updateSliderPanels();
+		updateButtonsPanel();
+		mainWindowSettings();
 		pack();
 		setVisible(true);
 	}
-	
+
 	public ArrayList<BufferedImage> getCurrentSprites() {
 		ArrayList<BufferedImage> spriteList = new ArrayList<BufferedImage>();
 		for (ImageBox box : workingBoxes) {
@@ -226,10 +296,6 @@ public class SpriteGUI extends JFrame
 			}
 		}
 		return spriteList;
-	}
-	
-	public void showMessage(String message) {
-		JOptionPane.showMessageDialog(this, message);
 	}
 	
 	public static void main(String[] args) {
