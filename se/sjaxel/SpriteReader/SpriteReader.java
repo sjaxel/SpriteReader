@@ -20,10 +20,6 @@ public class SpriteReader {
 	private int spriteH;
 	private int spriteW;
 	
-	static final int OFFSET_MIN = 0;
-	static final int OFFSET_MAX = 30;
-	static final int OFFSET_INIT = 0; 
-	
 	public SpriteReader() {
 		row = 1; col = 1;
 		xOffset = 0; yOffset = 0;			

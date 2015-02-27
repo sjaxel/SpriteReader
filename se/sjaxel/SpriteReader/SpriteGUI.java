@@ -3,6 +3,8 @@ package se.sjaxel.SpriteReader;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -22,10 +24,14 @@ public class SpriteGUI extends JFrame
 	private JPanel picPanel;
 	private JPanel buttonPanel;
 	private ArrayList<ImageBox> workingBoxes;
-	
+	private ModKey key;
+    enum ModKey {
+        SELECT, DESELECT, NONE;
+    }
 	SpriteGUI () {
 		picPanel = new JPanel();
 		setPreferredSize(new Dimension(640, 480));
+		key = ModKey.NONE;
 	}
 	
 	public void setModel(SpriteReader r) {
@@ -83,6 +89,14 @@ public class SpriteGUI extends JFrame
 		}
 	}
 	
+	public ModKey getModkey() {
+		return key;
+	}
+	
+	public void setModkey(ModKey k) {
+		key = k;
+	}
+
 	private void loadReader() {
         int returnVal = fc.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -107,7 +121,7 @@ public class SpriteGUI extends JFrame
 	public void reload() {
 		workingBoxes = new ArrayList<ImageBox>();
 		for (int n=1; n<(reader.getIndex()+1); n++) {
-			ImageBox box = new ImageBox(n, reader.getSprite(n), reader);
+			ImageBox box = new ImageBox(n, reader.getSprite(n), this);
 			workingBoxes.add(box);
 			picPanel.add(box);
 		}	
@@ -193,7 +207,7 @@ public class SpriteGUI extends JFrame
 		parent.add(field);
 	}
 	
-	public void display() {
+	public void displayMainWindow() {
 		addSlider("xOffset", SwingConstants.HORIZONTAL, BorderLayout.SOUTH, -30, 30, 1);
 		addSlider("yOffset", SwingConstants.VERTICAL, BorderLayout.WEST, -30, 30, 1);
 		picPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -220,6 +234,6 @@ public class SpriteGUI extends JFrame
 	
 	public static void main(String[] args) {
 		SpriteGUI main = new SpriteGUI();
-		main.display();
+		main.displayMainWindow();
 	}
 }
